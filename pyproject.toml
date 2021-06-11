@@ -4,6 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [tool.flit.metadata]
 module = "observattr"
+home-page = "https://github.com/mbckstl/observattr"
 author = "Marnix Bockstael"
 author-email = "mbockstael@protonmail.com"
 classifiers = [ "License :: OSI Approved :: MIT License",]

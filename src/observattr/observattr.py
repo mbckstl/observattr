@@ -1,4 +1,5 @@
 import logging, inspect
+from collections import deque
 
 
 class ObservableProxy:
@@ -8,12 +9,19 @@ class ObservableProxy:
     around all public methods of the object. Has a list of observers
     that is notified upon proxy method calls. Append observers via the
     subscribe() method.
+    
+    This proxy can be used directly for mutable objects that are not
+    replaced by any assignment operations to the variable name.
+    
+    Feature ideas:
+    - Allow selection of public methods to proxy (include/exclude)
+    - Allow selection of private methods to proxy
     """
     
     def __init__(self, obj):
         logging.debug(f'__init__ called for class {self.__class__}')
         self.obj = obj
-        self.observers = []
+        self.observers = deque()
         
         for name in dir(obj):
             attr = getattr(obj, name)
@@ -35,10 +43,21 @@ class ObservableProxy:
         """Use bitwise NOT (~) syntax to return the underlying object"""
         return self.obj
         
-    def subscribe(self, func):
-        self.observers.append(func)
+    def subscribe(self, func, insert=False):
+        """Subscribe a new callable observer
+        
+        Defaults to appending at the end of the queue.
+        """
+        if insert:
+            self.observers.appendleft(func)
+        else:
+            self.observers.append(func)
 
     def notify(self):
+        """Notify observers
+        
+        Calls observers and passes underlying object as argument
+        """
         for observer in self.observers:
             observer(self.obj)
     
@@ -50,6 +69,10 @@ class ObservableAttribute:
     variable). Creates a reference to the underlying _Observable,
     which defines proxy methods around all public methods of an
     arbitrary object.
+    
+    Since this is implemented as a descriptor, it allows new assignment
+    of the observable attribute to be tracked (see implementation of
+    __set__).
     """
     
     def __init__(self, observable_type=None):
